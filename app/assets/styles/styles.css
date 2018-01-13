@@ -64,7 +64,7 @@ table {
 
 
 .container {
-    height: 100vh;
+    // height: 100vh;
     width: 100vw;
     color: white;
     background-color: skyblue;
@@ -73,3 +73,4 @@ table {
     align-items: center;
     font-size: 100px;
 }
+
