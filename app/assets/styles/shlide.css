@@ -1,3 +1,53 @@
-body {
-  background-color: red;
+.shlide {
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background: #FAFAFA;
+    margin-bottom: 30px;
+    // counter-reset: carousel-cell;
+    position: relative;
+    width: 50%;
+}
+
+.shlide-viewport {
+  height: 160px;
+  touch-action: pan-y;
+  cursor: move;
+  cursor: -webkit-grab;
+  cursor: grab;
+  overflow: hidden;
+  position: relative;
+  // height: 100%;
+}
+
+.shlide-slider {
+  left: 0px;
+  /* set with js? */
+  // transform: translateX(-89.82%);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.shlide-cell {
+  position: absolute;
+  // left: 0%;
+  margin-bottom: 0;
+  /* set with js? */
+  // width: 66%;
+  height: 100%;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  
+}
+
+.shlide-image {
+  display: block;
+  // width: 100px;
+  margin: 0 auto;
+  width: 100%;
+  // height: auto;
 }

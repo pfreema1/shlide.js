@@ -1,3 +1,3 @@
-# shlide.js
+# shlide.js  (WIP)
 
 A shimple image shlider.
