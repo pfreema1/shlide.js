@@ -62,6 +62,19 @@ gulp.task("styles", function() {
     .pipe(gulp.dest("./app/temp/styles"));
 });
 
+gulp.task("shlide-styles", function() {
+  return gulp
+    .src("./app/assets/styles/shlide.css")
+    .pipe(
+      postcss([postCSS_InlineComment, mixins, cssvars, nested, autoprefixer])
+    )
+    .on("error", function(errorInfo) {
+      console.log(errorInfo.toString());
+      this.emit("end");
+    })
+    .pipe(gulp.dest("./app/temp/styles"));
+});
+
 //this uses the gulp-watch plugin - *****baseDir should point to where index.html lives!!!
 gulp.task("watch", function() {
   browserSync.init({
@@ -82,6 +95,12 @@ gulp.task("watch", function() {
     gulp.start("styles");
     browserSync.reload();
   });
+
+  watch("./app/assets/styles/**/shlide.css", function() {
+    gulp.start("shlide-styles");
+    browserSync.reload();
+  });
+
 });
 
 /*

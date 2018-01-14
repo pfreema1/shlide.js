@@ -1,123 +1,77 @@
 class Shlide {
   
   constructor(el, options) {
-    this.containerEl = el;
-    this.imageElements = document.querySelectorAll(".shlide-image");
-
-    //interaction variables
-    this.isSwiping = false;
-    this.touchStartCoords = { "x": -1, "y": -1 };
-    this.touchEndCoords = { "x": -1, "y": -1 };
-
-    this.wrapImagesInDiv();
-    //imageWrapperEl created in wrapImagesInDiv() method
-    this.addMultipleListeners(this.imageWrapperEl, "mousedown touchstart", this.swipeStart.bind(this));
-    this.addMultipleListeners(this.imageWrapperEl, "mousemove touchmove", this.swipeMove.bind(this));
-    this.addMultipleListeners(this.imageWrapperEl, "mouseup touchend", this.swipeEnd.bind(this));
-
-
-
-    this.setWrapperStyling(options);
-    this.setImageStyling(options);
-
-
-    //bindings
-    this.wrapImagesInDiv = this.wrapImagesInDiv.bind(this);
-    this.setWrapperStyling = this.setWrapperStyling.bind(this);
-    this.setImageStyling = this.setImageStyling.bind(this);
-    this.swipeStart = this.swipeStart.bind(this);
-    this.swipeMove = this.swipeMove.bind(this);
-    this.swipeEnd = this.swipeEnd.bind(this);
-    this.addMultipleListeners = this.addMultipleListeners.bind(this);
-  }
-
-  wrapImagesInDiv() {
-    //create wrapper element
-    let imageWrapperEl = document.createElement("div");
-    imageWrapperEl.classList.add("shlide-image-wrapper");
-
-    //insert wrapper before first image in the DOM tree
-    this.imageElements[0].parentNode.insertBefore(imageWrapperEl, this.imageElements[0]);
-
-    //move images into wrapper
-    for(let i = 0; i < this.imageElements.length; i++) {
-      imageWrapperEl.appendChild(this.imageElements[i]);
-    }
-
-    this.imageWrapperEl = imageWrapperEl;
-  }
-
-
-  setWrapperStyling(options) {
-    this.imageWrapperEl.style.display = "flex";
-    this.imageWrapperEl.style.justifyContent = "center";
-    this.imageWrapperEl.style.alignItems = "center";
-
-    this.imageWrapperEl.style.height = options.shlideContainerHeight;
-    this.imageWrapperEl.style.width = options.shlideContainerWidth;
-
-    // this.imageWrapperEl.style.overflow = "hidden";
-
-    this.imageWrapperEl.style.position = "relative";
-    this.imageWrapperEl.style.left = "0px";
-  }
-
-  setImageStyling(options) {
-    for(let i = 0; i < this.imageElements.length; i++) {
-      options.maxImageHeight ? this.imageElements[i].style.maxHeight = options.maxImageHeight : null;
-      options.maxImageWidth ? this.imageElements[i].style.maxWidth = options.maxImageWidth : null;
-      options.padding ? (this.imageElements[i].style.paddingLeft = options.padding, 
-                         this.imageElements[i].style.paddingRight = options.padding) : null;
-
-      //prevents the dragging of ghost image
-      this.imageElements[i].draggable = false;
-      
-    }
-  }
-
-  addMultipleListeners(el, s, fn) {
-    var evts = s.split(' ');
-    for(let i = 0; i < evts.length; i++) {
-      el.addEventListener(evts[i], fn, false);
-    }
-  }
-  
-  swipeStart(ev) {
-    console.log("swipeStart() called");
-    this.isSwiping = true;
+    this.shlideEl = el;
+    this.shlideImgEls = document.querySelectorAll(".shlide-image");
     
 
-    this.touchStartCoords = { "x": ev.pageX, "y": ev.pageY };
+    /*  dom layout:
+        div.shlide
+          div.shlide-viewport
+            div.shlide-slider
+              div.shlide-cell
+                img.shlide-img
+                img.shlide-img
+                img.shlide-img
+          button
+          button
+          ol
 
-    
+    */
+    this.setUpDOM();
+
+    this.styleElements();
+
+
+
+    //bindings 
+    this.setUpDOM = this.setUpDOM.bind(this);
+    this.styleElements = this.styleElements.bind(this);
   }
 
-  swipeMove(ev) {
+  setUpDOM() {
+    this.shlideViewportEl = document.createElement("div");
+    this.shlideViewportEl.classList.add("shlide-viewport");
+    this.shlideSliderEl = document.createElement("div");
+    this.shlideSliderEl.classList.add("shlide-slider");
     
-    if(this.isSwiping) {
 
-      let movementAmount = (ev.pageX - this.touchStartCoords.x) / 10;
-      let currentLeftAmount = parseInt(this.imageWrapperEl.style.left.slice(0, this.imageWrapperEl.style.left.length -1));
-
-      console.log("currentLeftAmount:  " + currentLeftAmount);
-
-      console.log("movementAmount:  " + movementAmount);
-      this.imageWrapperEl.style.left = (currentLeftAmount + movementAmount) + "px";
+    //wrap image elements in div.shlide-cell 
+    for(let i = 0; i < this.shlideImgEls.length; i++) {
+      let shlideImageWrapper = document.createElement("div");
+      shlideImageWrapper.classList.add("shlide-cell");
+      this.shlideImgEls[i].parentNode.insertBefore(shlideImageWrapper, this.shlideImgEls[i]);
+      shlideImageWrapper.appendChild(this.shlideImgEls[i]);
     }
+
+    this.shlideEl.prepend(this.shlideViewportEl);
+    this.shlideViewportEl.prepend(this.shlideSliderEl);
+    
+    this.shlideCellEls = document.querySelectorAll(".shlide-cell");
+
+    for(let i = 0; i < this.shlideCellEls.length; i++) {
+      this.shlideSliderEl.appendChild(this.shlideCellEls[i]);
+    }
+
+    //add buttons and dot elements
+    this.shlidePrevButtonEl = document.createElement("button");
+    this.shlidePrevButtonEl.classList.add("shlide-button", "shlide-button--previous");
+    this.shlideNextButtonEl = document.createElement("button");
+    this.shlideNextButtonEl.classList.add("shlide-button", "shlide-button--next");
+    this.shlideDotsEl = document.createElement("ol");
+
+    this.shlideEl.appendChild(this.shlidePrevButtonEl);
+    this.shlideEl.appendChild(this.shlideNextButtonEl);
+    this.shlideEl.appendChild(this.shlideDotsEl);
+
   }
 
-  swipeEnd(ev) {
-    console.log("swipeEnd() called");
-    this.isSwiping = false;
-    console.log(ev);
-    console.log("ev.pageX:  " + ev.pageX);
+  styleElements() {
 
-    this.touchStartCoords = { "x": -1, "y": -1 };
-    this.touchEndCoords = { "x": ev.pageX, "y": ev.pageY };
+    /* style shlide element */
+    
 
-    console.log("this.imageWrapperEl.style.left:  " + this.imageWrapperEl.style.left);
   }
 
 
 }
-

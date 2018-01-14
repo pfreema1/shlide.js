@@ -1,8 +1,3 @@
-let elem = document.querySelector(".shlide-container");
+let elem = document.querySelector(".shlide");
 
-var shlide = new Shlide(elem, {
-  maxImageHeight: "50%",
-  shlideContainerHeight: "500px",
-  shlideContainerWidth: "500px",
-  padding: "0px"
-});
+var shlide = new Shlide(elem, {});
