@@ -6,8 +6,9 @@ class Shlide {
     this.isSwiping = false;
     this.endingTranslateX = 0;
     this.tallestImageHeight = 0;
+    this.heightCheckerCounter = 0;
 
-    /*  dom layout:
+    /*  DOM layout:
         div.shlide
           div.shlide-viewport
             div.shlide-slider
@@ -29,7 +30,7 @@ class Shlide {
     this.addMultipleListeners(this.shlideSliderEl, "mouseup touchend", this.swipeEnd.bind(this));
 
 
-    
+    this.getImageHeights();
 
    
 
@@ -39,6 +40,9 @@ class Shlide {
     this.swipeStart = this.swipeStart.bind(this);
     this.swipeMove = this.swipeMove.bind(this);
     this.swipeEnd = this.swipeEnd.bind(this);
+    this.getImageHeights = this.getImageHeights.bind(this);
+    this.heightChecker = this.heightChecker.bind(this);
+    this.setViewportHeight = this.setViewportHeight.bind(this);
   }
 
   setUpDOM() {
@@ -149,7 +153,32 @@ class Shlide {
     return parseInt(transformString);
   }
 
-  
+  heightChecker(height) {
+    height > this.tallestImageHeight ? this.tallestImageHeight = height : null;
+    this.heightCheckerCounter++;
+
+    if(this.heightCheckerCounter === this.shlideCellEls.length) {
+      this.setViewportHeight();
+    }
+  }
+
+  getImageHeights() {
+
+    for(let i = 0; i < this.shlideCellEls.length; i++) {
+      let tempImg = new Image();
+      tempImg.src = this.shlideCellEls[i].firstChild.src;
+      tempImg.onload = () => {
+        console.log(this);
+        console.log(tempImg.height);
+        this.heightChecker(tempImg.height);   
+      };
+    }
+  } 
+
+  setViewportHeight() {
+    console.log("this.tallestImageHeight:  " + this.tallestImageHeight);
+    this.shlideViewportEl.style.height = this.tallestImageHeight + "px";
+  }
 
  
 
