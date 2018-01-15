@@ -7,6 +7,8 @@ class Shlide {
     this.endingTranslateX = 0;
     this.tallestImageHeight = 0;
     this.heightCheckerCounter = 0;
+    this.shlideEl.style.width = options.width;
+    this.cellSizingScale = 0.75;
 
     /*  DOM layout:
         div.shlide
@@ -42,7 +44,7 @@ class Shlide {
     this.swipeEnd = this.swipeEnd.bind(this);
     this.getImageHeights = this.getImageHeights.bind(this);
     this.heightChecker = this.heightChecker.bind(this);
-    this.setViewportHeight = this.setViewportHeight.bind(this);
+    this.setShlideViewportHeight = this.setShlideViewportHeight.bind(this);
   }
 
   setUpDOM() {
@@ -84,8 +86,8 @@ class Shlide {
 
 
   setWidthAndPositionOfCells() {
-    let cellSizingScale = 0.75;
-    let widthOfCell = cellSizingScale * this.shlideEl.offsetWidth;
+    
+    let widthOfCell = this.cellSizingScale * this.shlideEl.offsetWidth;
     let tallestImageInPx = 0;
 
     for(let i = 0; i < this.shlideCellEls.length; i++) {
@@ -153,12 +155,13 @@ class Shlide {
     return parseInt(transformString);
   }
 
-  heightChecker(height) {
-    height > this.tallestImageHeight ? this.tallestImageHeight = height : null;
+  heightChecker(tempImg) {
+    tempImg.height > this.tallestImageHeight ? (this.tallestImageHeight = tempImg.height,
+                                       this.tallestImageWidth = tempImg.width) : null;
     this.heightCheckerCounter++;
 
     if(this.heightCheckerCounter === this.shlideCellEls.length) {
-      this.setViewportHeight();
+      this.setShlideViewportHeight();
     }
   }
 
@@ -168,16 +171,40 @@ class Shlide {
       let tempImg = new Image();
       tempImg.src = this.shlideCellEls[i].firstChild.src;
       tempImg.onload = () => {
-        console.log(this);
-        console.log(tempImg.height);
-        this.heightChecker(tempImg.height);   
+        // console.log(this);
+        // console.log(tempImg.height);
+        this.heightChecker(tempImg);   
       };
     }
   } 
 
-  setViewportHeight() {
+  setShlideViewportHeight() {
     console.log("this.tallestImageHeight:  " + this.tallestImageHeight);
-    this.shlideViewportEl.style.height = this.tallestImageHeight + "px";
+    console.log("this.tallestImageWidth:  " + this.tallestImageWidth);
+    console.log("this.shlideEl.width:  " + this.shlideEl.style.width);
+
+    let widthOfShlideEl = 0;
+    // take off "%" or "px" on shlideEl.style.width and convert to int (in px)
+    if(this.shlideEl.style.width.indexOf("%") != -1) {
+      // case:  width string is a percentage
+      widthOfShlideEl = parseInt(this.shlideEl.style.width.slice(0, this.shlideEl.style.width.length - 1));
+      widthOfShlideEl = (widthOfShlideEl / 100) * document.documentElement.clientWidth;
+    } else {
+      // case:  width string is in px
+      widthOfShlideEl = parseInt(this.shlideEl.style.width.slice(0, this.shlideEl.style.width.length - 2));
+    }
+
+    // calculate image width
+    let allImagesWidth = this.cellSizingScale * widthOfShlideEl;
+    // calculate aspect ratio --- (original height / original width) x new width = new height
+    let newHeight = (this.tallestImageHeight / this.tallestImageWidth) * allImagesWidth;
+    
+
+    //this.cellSizingScale = 0.75;
+    console.log(newHeight);
+
+    
+    this.shlideViewportEl.style.height = newHeight + "px";
   }
 
  
