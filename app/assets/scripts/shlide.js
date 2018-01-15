@@ -9,6 +9,7 @@ class Shlide {
     this.heightCheckerCounter = 0;
     this.shlideEl.style.width = options.width;
     this.cellSizingScale = 0.75;
+    this.imageDimensionInfoArray = [];
 
     /*  DOM layout:
         div.shlide
@@ -24,6 +25,8 @@ class Shlide {
 
     */
     this.setUpDOM();
+
+    this.initImageDimensionInfoArray();
 
     this.setWidthAndPositionOfCells();
 
@@ -45,6 +48,11 @@ class Shlide {
     this.getImageHeights = this.getImageHeights.bind(this);
     this.heightChecker = this.heightChecker.bind(this);
     this.setShlideViewportHeight = this.setShlideViewportHeight.bind(this);
+    this.centerImagesInShlideViewport = this.centerImagesInShlideViewport.bind(this);
+    this.initImageDimensionInfoArray = this.initImageDimensionInfoArray.bind(this);
+    this.addImageOriginalDimensionInfo = this.addImageOriginalDimensionInfo.bind(this);
+    this.addImageNewDimensionInfo = this.addImageNewDimensionInfo.bind(this);
+    this.setNewImageHeights = this.setNewImageHeights.bind(this);
   }
 
   setUpDOM() {
@@ -84,6 +92,16 @@ class Shlide {
 
   }
 
+  initImageDimensionInfoArray() {
+    for(let i = 0; i < this.shlideImgEls.length; i++) {
+      let tmpObj = {};
+      tmpObj.src = this.shlideImgEls[i].src;
+      this.imageDimensionInfoArray.push(tmpObj);
+    }
+
+    // console.log(this.imageDimensionInfoArray);
+  }
+
 
   setWidthAndPositionOfCells() {
     
@@ -114,8 +132,8 @@ class Shlide {
   }
 
   swipeStart(ev) {
-    console.log("swipeStart() running");
-    console.log(this);
+    // console.log("swipeStart() running");
+    // console.log(this);
     
     this.isSwiping = true;
     this.touchStartX = ev.pageX;
@@ -134,7 +152,7 @@ class Shlide {
   }
 
   swipeEnd(ev) {
-    console.log("swipeEnd() running");
+    // console.log("swipeEnd() running");
     this.isSwiping = false;
     this.touchEndX = ev.pageX;
 
@@ -150,21 +168,93 @@ class Shlide {
 
     transformString = transformString.slice(startingIndex, endingIndex);
 
-    console.log("transformString:  " + transformString);
+    // console.log("transformString:  " + transformString);
 
     return parseInt(transformString);
   }
 
+
+  /*
+      Compares the height of all the images and gets the tallest one.
+      Once we've compared all images we call setShlideViewportHeight
+      -tallest image determines the height of the ShlideViewport
+      -also calls addImageOriginalDimensionInfo to.....add image original dimension info
+  */
   heightChecker(tempImg) {
+
+    this.addImageOriginalDimensionInfo(tempImg);
+
     tempImg.height > this.tallestImageHeight ? (this.tallestImageHeight = tempImg.height,
                                        this.tallestImageWidth = tempImg.width) : null;
     this.heightCheckerCounter++;
 
+    // run setShlideViewportHeight() after all images have been checked
     if(this.heightCheckerCounter === this.shlideCellEls.length) {
       this.setShlideViewportHeight();
     }
   }
 
+  addImageOriginalDimensionInfo(tempImg) {
+    this.imageDimensionInfoArray = this.imageDimensionInfoArray.map(elem => {
+      if(elem.src === tempImg.src) {
+        elem.origWidth = tempImg.width;
+        elem.origHeight = tempImg.height;
+      }
+
+      return elem;
+    });
+
+    // console.log(this.imageDimensionInfoArray);
+  }
+
+  addImageNewDimensionInfo(allImagesWidth) {
+    this.imageDimensionInfoArray = this.imageDimensionInfoArray.map(elem => {
+      elem.newWidth = allImagesWidth;
+
+      //calculate new height --- (original height / original width) x new width = new height
+      elem.newHeight = (elem.origHeight / elem.origWidth) * elem.newWidth;
+
+      return elem;
+    });
+
+    this.setNewImageHeights();
+  }
+
+  /*
+      Sets height of each image.  This is needed to be able to center using
+      the top: 50% translateY(-50%) trick to center the images
+  */
+  setNewImageHeights() {
+
+    // console.log(this.imageDimensionInfoArray);
+    // this.shlideCellEls = this.shlideCellEls.map(elem => {
+    //   return elem;
+    // });
+
+    for(let i = 0; i < this.shlideCellEls.length; i++) {
+      // get dimension info for this shlideCellEl 
+      let imgDimensionInfo = this.imageDimensionInfoArray.filter((elem) => {
+        if(this.shlideCellEls[i].firstChild.src == elem.src) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+
+      this.shlideCellEls[i].style.height = imgDimensionInfo[0].newHeight + "px";
+      // console.log(this.shlideCellEls[i]);
+      // console.log(imgDimensionInfo[0].newHeight);
+    }
+
+    // now that we have the heights set, lets center the images!
+    this.centerImagesInShlideViewport();
+  }
+
+  /*
+      Loads each image and gets original height.
+      -When image loads heightChecker() is called to compare heights and 
+       find tallest image
+  */
   getImageHeights() {
 
     for(let i = 0; i < this.shlideCellEls.length; i++) {
@@ -178,10 +268,11 @@ class Shlide {
     }
   } 
 
+  /*
+      Sets the shlide viewport height based on the tallest image
+
+  */
   setShlideViewportHeight() {
-    console.log("this.tallestImageHeight:  " + this.tallestImageHeight);
-    console.log("this.tallestImageWidth:  " + this.tallestImageWidth);
-    console.log("this.shlideEl.width:  " + this.shlideEl.style.width);
 
     let widthOfShlideEl = 0;
     // take off "%" or "px" on shlideEl.style.width and convert to int (in px)
@@ -196,18 +287,28 @@ class Shlide {
 
     // calculate image width
     let allImagesWidth = this.cellSizingScale * widthOfShlideEl;
+
+    // update image dimension info array with new widths and calculate new heights
+    this.addImageNewDimensionInfo(allImagesWidth);
+
     // calculate aspect ratio --- (original height / original width) x new width = new height
-    let newHeight = (this.tallestImageHeight / this.tallestImageWidth) * allImagesWidth;
+    let newShlideViewportHeight = (this.tallestImageHeight / this.tallestImageWidth) * allImagesWidth;
     
+    // set new viewport height
+    this.shlideViewportEl.style.height = newShlideViewportHeight + "px";
 
-    //this.cellSizingScale = 0.75;
-    console.log(newHeight);
-
-    
-    this.shlideViewportEl.style.height = newHeight + "px";
   }
 
- 
+  centerImagesInShlideViewport() {
+    console.log("hi there!");
+    for(let i = 0; i < this.shlideCellEls.length; i++) {
+      
+      this.shlideCellEls[i].style.top = "50%";
+      this.shlideCellEls[i].style.transform = "translateY(-50%)";
+    }
+
+    
+  }
 
 
 }
