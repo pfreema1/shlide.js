@@ -10,6 +10,7 @@ class Shlide {
     this.shlideEl.style.width = options.width;
     this.cellSizingScale = 0.75;
     this.imageDimensionInfoArray = [];
+    options.padding ? this.padding = parseInt(options.padding.slice(0, options.padding.length - 2)) : this.padding = 0;
 
     /*  DOM layout:
         div.shlide
@@ -53,6 +54,7 @@ class Shlide {
     this.addImageOriginalDimensionInfo = this.addImageOriginalDimensionInfo.bind(this);
     this.addImageNewDimensionInfo = this.addImageNewDimensionInfo.bind(this);
     this.setNewImageHeights = this.setNewImageHeights.bind(this);
+    this.positionButtons = this.positionButtons.bind(this);
   }
 
   setUpDOM() {
@@ -90,8 +92,18 @@ class Shlide {
     this.shlideEl.appendChild(this.shlideNextButtonEl);
     this.shlideEl.appendChild(this.shlideDotsEl);
 
+    //add click event listeners
+    this.shlideNextButtonEl.addEventListener("click", this.handleNextButtonClicked.bind(this));
+    this.shlidePrevButtonEl.addEventListener("click", this.handlePrevButtonClicked.bind(this));
+
+    this.positionButtons();
+
   }
 
+  /*
+      Initial array of objects that hold image dimension info.  
+      The info is needed to be able to dynamically center the images.
+  */
   initImageDimensionInfoArray() {
     for(let i = 0; i < this.shlideImgEls.length; i++) {
       let tmpObj = {};
@@ -103,6 +115,30 @@ class Shlide {
   }
 
 
+  /*
+      set horizontal position of prev and next buttons
+  */
+  positionButtons() {
+    this.shlidePrevButtonEl.style.left = "0px";
+    this.shlideNextButtonEl.style.left = (this.shlideEl.offsetWidth - 50) + "px";
+
+  }
+
+
+  handlePrevButtonClicked() {
+    console.log("prev button clicked!");
+    console.log(this);
+
+    // move this.shlideSliderEl left X pixels
+  }
+
+  handleNextButtonClicked() {
+    console.log("next button clicked!");
+    console.log(this);
+
+    // move this.shlideSliderEl right X pixels
+  }
+
   setWidthAndPositionOfCells() {
     
     let widthOfCell = this.cellSizingScale * this.shlideEl.offsetWidth;
@@ -112,7 +148,7 @@ class Shlide {
       this.shlideCellEls[i].style.width = widthOfCell + "px";
 
       //set left positioning
-      this.shlideCellEls[i].style.left = (i * widthOfCell) + "px";
+      this.shlideCellEls[i].style.left = (i * (widthOfCell + this.padding)) + "px";
 
       //disable image dragging
       this.shlideCellEls[i].firstChild.draggable = false;
