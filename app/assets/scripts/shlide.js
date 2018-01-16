@@ -11,6 +11,8 @@ class Shlide {
     this.cellSizingScale = 0.75;
     this.imageDimensionInfoArray = [];
     options.padding ? this.padding = parseInt(options.padding.slice(0, options.padding.length - 2)) : this.padding = 0;
+    this.rafId = undefined;
+    this.amountAnimated = 0;
 
     /*  DOM layout:
         div.shlide
@@ -38,6 +40,9 @@ class Shlide {
 
     this.getImageHeights();
 
+    //set initial transform
+    this.shlideSliderEl.style.transform = "translate3d(0px, 0px, 0px)";
+
    
 
     //bindings 
@@ -55,6 +60,8 @@ class Shlide {
     this.addImageNewDimensionInfo = this.addImageNewDimensionInfo.bind(this);
     this.setNewImageHeights = this.setNewImageHeights.bind(this);
     this.positionButtons = this.positionButtons.bind(this);
+    this.animLoop = this.animLoop.bind(this);
+    this.stopAnim = this.stopAnim.bind(this);
   }
 
   setUpDOM() {
@@ -126,18 +133,59 @@ class Shlide {
 
 
   handlePrevButtonClicked() {
-    console.log("prev button clicked!");
-    console.log(this);
+    
 
-    // move this.shlideSliderEl left X pixels
+    this.animDirection = "left";
+    this.rafId = window.requestAnimationFrame(this.animLoop);
+    
   }
 
   handleNextButtonClicked() {
-    console.log("next button clicked!");
-    console.log(this);
-
-    // move this.shlideSliderEl right X pixels
+    this.animDirection = "right";
+    this.rafId = window.requestAnimationFrame(this.animLoop);
   }
+
+
+  /*
+     animation functions
+  */
+  animLoop() {
+
+    
+
+    //if we havent moved this.animationMovementEndAmount pixels then move and recall RAF
+    //else, stop animation
+    if(Math.abs(this.amountAnimated) < this.animationMovementEndAmount) {
+
+      this.animDirection === "left" ? this.amountAnimated += 10 : this.amountAnimated -= 10;
+      
+      let currPos = this.returnTranslateXValue(this.shlideSliderEl);
+      console.log(currPos);
+      console.log("this.amountAnimated:  " + this.amountAnimated);
+      console.log("this.animationMovementEndAmount:  " + this.animationMovementEndAmount);
+
+      this.shlideSliderEl.style.transform = "translate3d(" + (currPos + this.amountAnimated) + "px, 0px, 0px)";
+
+      
+
+      window.requestAnimationFrame(this.animLoop);
+    } else {
+      // this.endingAnimPos = this.shlideSliderEl.style.left;
+      this.stopAnim();
+    }
+    
+
+    
+
+  
+  }
+
+  stopAnim() {
+    this.amountAnimated = 0;
+    window.cancelAnimationFrame(this.rafId);
+  }
+
+
 
   setWidthAndPositionOfCells() {
     
@@ -252,6 +300,9 @@ class Shlide {
 
       return elem;
     });
+
+    //set amount of movement for animation
+    this.animationMovementEndAmount = this.imageDimensionInfoArray[0].newWidth;
 
     this.setNewImageHeights();
   }
