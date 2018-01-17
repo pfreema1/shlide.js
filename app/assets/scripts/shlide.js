@@ -60,8 +60,10 @@ class Shlide {
     this.addImageNewDimensionInfo = this.addImageNewDimensionInfo.bind(this);
     this.setNewImageHeights = this.setNewImageHeights.bind(this);
     this.positionButtons = this.positionButtons.bind(this);
-    this.animLoop = this.animLoop.bind(this);
+    this.animLoopPrevButton = this.animLoopPrevButton.bind(this);
+    this.animLoopNextButton = this.animLoopNextButton.bind(this);
     this.stopAnim = this.stopAnim.bind(this);
+    this.moveSliderSoFirstImageIsHorizontallyCentered = this.moveSliderSoFirstImageIsHorizontallyCentered.bind(this);
   }
 
   setUpDOM() {
@@ -133,52 +135,65 @@ class Shlide {
 
 
   handlePrevButtonClicked() {
-    
 
-    this.animDirection = "left";
-    this.rafId = window.requestAnimationFrame(this.animLoop);
+    this.animationEndingPosition = this.returnTranslateXValue(this.shlideSliderEl) + this.animationMovementAmount;
+
+    this.rafId = window.requestAnimationFrame(this.animLoopPrevButton);
     
   }
 
   handleNextButtonClicked() {
-    this.animDirection = "right";
-    this.rafId = window.requestAnimationFrame(this.animLoop);
+
+    console.log(this.animationMovementAmount);
+
+    this.animationEndingPosition = this.returnTranslateXValue(this.shlideSliderEl);
+    this.animationEndingPosition = this.animationEndingPosition - (this.animationMovementAmount/* + (this.padding / 2)*/);
+    this.animationEndingPosition = this.animationEndingPosition - this.padding;
+    this.rafId = window.requestAnimationFrame(this.animLoopNextButton);
   }
 
 
   /*
      animation functions
   */
-  animLoop() {
+  animLoopPrevButton() {
 
+    let currPos = this.returnTranslateXValue(this.shlideSliderEl);
     
-
-    //if we havent moved this.animationMovementEndAmount pixels then move and recall RAF
+    //if we havent moved this.animationMovementAmount pixels then move and recall RAF
     //else, stop animation
-    if(Math.abs(this.amountAnimated) < this.animationMovementEndAmount) {
+    if(currPos < this.animationEndingPosition) {
 
-      this.animDirection === "left" ? this.amountAnimated += 10 : this.amountAnimated -= 10;
-      
-      let currPos = this.returnTranslateXValue(this.shlideSliderEl);
-      console.log(currPos);
-      console.log("this.amountAnimated:  " + this.amountAnimated);
-      console.log("this.animationMovementEndAmount:  " + this.animationMovementEndAmount);
-
+      this.amountAnimated += 10;
+    
       this.shlideSliderEl.style.transform = "translate3d(" + (currPos + this.amountAnimated) + "px, 0px, 0px)";
 
-      
-
-      window.requestAnimationFrame(this.animLoop);
+      window.requestAnimationFrame(this.animLoopPrevButton);
     } else {
-      // this.endingAnimPos = this.shlideSliderEl.style.left;
       this.stopAnim();
     }
-    
 
-    
-
-  
   }
+
+
+  animLoopNextButton() {
+    let currPos = this.returnTranslateXValue(this.shlideSliderEl);
+    
+    //if we havent moved this.animationMovementAmount pixels then move and recall RAF
+    //else, stop animation
+    if(currPos > this.animationEndingPosition) {
+
+      this.amountAnimated += 1;
+    
+      this.shlideSliderEl.style.transform = "translate3d(" + (currPos - this.amountAnimated) + "px, 0px, 0px)";
+
+      window.requestAnimationFrame(this.animLoopNextButton);
+    } else {
+      this.stopAnim();
+    }
+
+  }
+
 
   stopAnim() {
     this.amountAnimated = 0;
@@ -196,7 +211,8 @@ class Shlide {
       this.shlideCellEls[i].style.width = widthOfCell + "px";
 
       //set left positioning
-      this.shlideCellEls[i].style.left = (i * (widthOfCell + this.padding)) + "px";
+      this.shlideCellEls[i].style.left = (i * (widthOfCell + this.padding)) + "px";  //original
+      // this.shlideCellEls[i].style.left = ((i * widthOfCell) + this.padding) + "px";
 
       //disable image dragging
       this.shlideCellEls[i].firstChild.draggable = false;
@@ -302,7 +318,7 @@ class Shlide {
     });
 
     //set amount of movement for animation
-    this.animationMovementEndAmount = this.imageDimensionInfoArray[0].newWidth;
+    this.animationMovementAmount = this.imageDimensionInfoArray[0].newWidth;
 
     this.setNewImageHeights();
   }
@@ -394,8 +410,21 @@ class Shlide {
       this.shlideCellEls[i].style.transform = "translateY(-50%)";
     }
 
+    this.moveSliderSoFirstImageIsHorizontallyCentered();
     
   }
+
+
+  moveSliderSoFirstImageIsHorizontallyCentered() {
+    
+    let fullWidth = this.imageDimensionInfoArray[0].newWidth/this.cellSizingScale;
+    
+    let offset = fullWidth * ((1 - this.cellSizingScale) / 2);
+
+    this.shlideSliderEl.style.transform = "translate3d(" + offset + "px, 0px, 0px)";
+  }
+
+
 
 
 }
