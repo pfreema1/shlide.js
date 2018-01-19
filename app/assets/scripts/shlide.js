@@ -13,6 +13,8 @@ class Shlide {
     options.padding ? this.padding = parseInt(options.padding.slice(0, options.padding.length - 2)) : this.padding = 0;
     this.rafId = undefined;
     this.amountAnimated = 0;
+    options.speed ? this.animDuration = options.speed : this.animDuration = 2000;
+    this.animStartTime = null;
 
     /*  DOM layout:
         div.shlide
@@ -60,10 +62,12 @@ class Shlide {
     this.addImageNewDimensionInfo = this.addImageNewDimensionInfo.bind(this);
     this.setNewImageHeights = this.setNewImageHeights.bind(this);
     this.positionButtons = this.positionButtons.bind(this);
-    this.animLoopPrevButton = this.animLoopPrevButton.bind(this);
+    // this.animLoopPrevButton = this.animLoopPrevButton.bind(this);
     this.animLoopNextButton = this.animLoopNextButton.bind(this);
-    this.stopAnim = this.stopAnim.bind(this);
+    // this.stopAnim = this.stopAnim.bind(this);
     this.moveSliderSoFirstImageIsHorizontallyCentered = this.moveSliderSoFirstImageIsHorizontallyCentered.bind(this);
+    this.handleNextButtonClicked = this.handleNextButtonClicked.bind(this);
+    this.handlePrevButtonClicked = this.handlePrevButtonClicked.bind(this);
   }
 
   setUpDOM() {
@@ -136,70 +140,52 @@ class Shlide {
 
   handlePrevButtonClicked() {
 
-    this.animationEndingPosition = this.returnTranslateXValue(this.shlideSliderEl) + this.animationMovementAmount;
+    requestAnimationFrame((timeStamp) => {
 
-    this.rafId = window.requestAnimationFrame(this.animLoopPrevButton);
-    
+      this.animStartTime = timeStamp;
+      let startingPos = this.returnTranslateXValue(this.shlideSliderEl);
+      this.animLoop(timeStamp, this.shlideSliderEl, this.animationMovementAmount + this.padding, this.animDuration, startingPos, "previous");
+    });
   }
 
   handleNextButtonClicked() {
 
-    console.log(this.animationMovementAmount);
+    requestAnimationFrame((timeStamp) => {
 
-    this.animationEndingPosition = this.returnTranslateXValue(this.shlideSliderEl);
-    this.animationEndingPosition = this.animationEndingPosition - (this.animationMovementAmount/* + (this.padding / 2)*/);
-    this.animationEndingPosition = this.animationEndingPosition - this.padding;
-    this.rafId = window.requestAnimationFrame(this.animLoopNextButton);
+      this.animStartTime = timeStamp;
+      let startingPos = this.returnTranslateXValue(this.shlideSliderEl);
+      this.animLoop(timeStamp, this.shlideSliderEl, this.animationMovementAmount + this.padding, this.animDuration, startingPos, "next");
+    });
+
   }
 
 
-  /*
-     animation functions
-  */
-  animLoopPrevButton() {
 
-    let currPos = this.returnTranslateXValue(this.shlideSliderEl);
+  animLoop(timeStamp, el, dist, duration, startingPos, direction) {
+
     
-    //if we havent moved this.animationMovementAmount pixels then move and recall RAF
-    //else, stop animation
-    if(currPos < this.animationEndingPosition) {
-
-      this.amountAnimated += 10;
+    let runTime = timeStamp - this.animStartTime;
+    let progress = runTime / duration;
+    progress = Math.min(progress, 1);
     
-      this.shlideSliderEl.style.transform = "translate3d(" + (currPos + this.amountAnimated) + "px, 0px, 0px)";
-
-      window.requestAnimationFrame(this.animLoopPrevButton);
+    if(direction === "next") {
+      el.style.transform = "translate3d(" + (startingPos - parseFloat((progress * dist).toFixed(2))) + "px, 0px, 0px)";
     } else {
-      this.stopAnim();
+      el.style.transform = "translate3d(" + (startingPos + parseFloat((progress * dist).toFixed(2))) + "px, 0px, 0px)";
+    }
+      
+
+      
+    if(runTime < duration) {
+      requestAnimationFrame((timeStamp) => {
+        if(direction === "next") 
+          this.animLoop(timeStamp, el, dist, duration, startingPos, "next");
+        else
+          this.animLoop(timeStamp, el, dist, duration, startingPos, "previous");
+      });
     }
 
   }
-
-
-  animLoopNextButton() {
-    let currPos = this.returnTranslateXValue(this.shlideSliderEl);
-    
-    //if we havent moved this.animationMovementAmount pixels then move and recall RAF
-    //else, stop animation
-    if(currPos > this.animationEndingPosition) {
-
-      this.amountAnimated += 1;
-    
-      this.shlideSliderEl.style.transform = "translate3d(" + (currPos - this.amountAnimated) + "px, 0px, 0px)";
-
-      window.requestAnimationFrame(this.animLoopNextButton);
-    } else {
-      this.stopAnim();
-    }
-
-  }
-
-
-  stopAnim() {
-    this.amountAnimated = 0;
-    window.cancelAnimationFrame(this.rafId);
-  }
-
 
 
   setWidthAndPositionOfCells() {
@@ -216,9 +202,6 @@ class Shlide {
 
       //disable image dragging
       this.shlideCellEls[i].firstChild.draggable = false;
-
-      // console.log(this.shlideCellEls[i].firstChild.src);
-      // console.log(this.showImage(this.shlideCellEls[i].firstChild.src));
     }
 
 
