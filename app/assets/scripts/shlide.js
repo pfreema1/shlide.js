@@ -15,6 +15,7 @@ class Shlide {
     this.amountAnimated = 0;
     options.speed ? this.animDuration = options.speed : this.animDuration = 2000;
     this.animStartTime = null;
+    this.isSelectedIndex = 0;
 
     /*  DOM layout:
         div.shlide
@@ -62,12 +63,10 @@ class Shlide {
     this.addImageNewDimensionInfo = this.addImageNewDimensionInfo.bind(this);
     this.setNewImageHeights = this.setNewImageHeights.bind(this);
     this.positionButtons = this.positionButtons.bind(this);
-    // this.animLoopPrevButton = this.animLoopPrevButton.bind(this);
-    this.animLoopNextButton = this.animLoopNextButton.bind(this);
-    // this.stopAnim = this.stopAnim.bind(this);
-    this.moveSliderSoFirstImageIsHorizontallyCentered = this.moveSliderSoFirstImageIsHorizontallyCentered.bind(this);
+    this.centerFirstImageAndSetIsSelectedClass = this.centerFirstImageAndSetIsSelectedClass.bind(this);
     this.handleNextButtonClicked = this.handleNextButtonClicked.bind(this);
     this.handlePrevButtonClicked = this.handlePrevButtonClicked.bind(this);
+    this.createArrayOfEndingPositions = this.createArrayOfEndingPositions.bind(this);
   }
 
   setUpDOM() {
@@ -140,22 +139,40 @@ class Shlide {
 
   handlePrevButtonClicked() {
 
-    requestAnimationFrame((timeStamp) => {
+    
+    if(!this.shlideCellEls[0].classList.contains("is-selected")) {  
+      // if we arent at the end (far left) of images, move the "is-selected" class and start animation
+      this.shlideCellEls[this.isSelectedIndex].classList.remove("is-selected");
+      this.isSelectedIndex--;
+      this.shlideCellEls[this.isSelectedIndex].classList.add("is-selected");
 
-      this.animStartTime = timeStamp;
-      let startingPos = this.returnTranslateXValue(this.shlideSliderEl);
-      this.animLoop(timeStamp, this.shlideSliderEl, this.animationMovementAmount + this.padding, this.animDuration, startingPos, "previous");
-    });
+      this.rafId = requestAnimationFrame((timeStamp) => {
+        
+        this.animStartTime = timeStamp;
+        let startingPos = this.returnTranslateXValue(this.shlideSliderEl);
+        this.animLoop(timeStamp, this.shlideSliderEl, this.animationMovementAmount + this.padding, this.animDuration, startingPos, "previous");
+      });
+    }
+
+    
   }
 
   handleNextButtonClicked() {
 
-    requestAnimationFrame((timeStamp) => {
+    if(!this.shlideCellEls[this.shlideCellEls.length - 1].classList.contains("is-selected")) {
+      // if we arent at the end (far right) of images, move the "is-selected" class and start anim
+      this.shlideCellEls[this.isSelectedIndex].classList.remove("is-selected");
+      this.isSelectedIndex++;
+      this.shlideCellEls[this.isSelectedIndex].classList.add("is-selected");
 
-      this.animStartTime = timeStamp;
-      let startingPos = this.returnTranslateXValue(this.shlideSliderEl);
-      this.animLoop(timeStamp, this.shlideSliderEl, this.animationMovementAmount + this.padding, this.animDuration, startingPos, "next");
-    });
+      this.rafId = requestAnimationFrame((timeStamp) => {
+        
+        this.animStartTime = timeStamp;
+        let startingPos = this.returnTranslateXValue(this.shlideSliderEl);
+        this.animLoop(timeStamp, this.shlideSliderEl, this.animationMovementAmount + this.padding, this.animDuration, startingPos, "next");
+      });
+    }
+
 
   }
 
@@ -183,6 +200,8 @@ class Shlide {
         else
           this.animLoop(timeStamp, el, dist, duration, startingPos, "previous");
       });
+    } else {
+      this.rafId = null;
     }
 
   }
@@ -393,20 +412,35 @@ class Shlide {
       this.shlideCellEls[i].style.transform = "translateY(-50%)";
     }
 
-    this.moveSliderSoFirstImageIsHorizontallyCentered();
+    this.centerFirstImageAndSetIsSelectedClass();
     
   }
 
 
-  moveSliderSoFirstImageIsHorizontallyCentered() {
+  
+  centerFirstImageAndSetIsSelectedClass() {
     
     let fullWidth = this.imageDimensionInfoArray[0].newWidth/this.cellSizingScale;
     
     let offset = fullWidth * ((1 - this.cellSizingScale) / 2);
 
     this.shlideSliderEl.style.transform = "translate3d(" + offset + "px, 0px, 0px)";
+
+    this.shlideCellEls[0].classList.add("is-selected");
+
+    this.createArrayOfEndingPositions();
   }
 
+  createArrayOfEndingPositions() {
+
+    this.endingPositionsArray = [];
+    for(let i = 0; i < this.shlideCellEls.length; i++) {
+
+      this.endingPositionsArray.push(this.returnTranslateXValue(this.shlideSliderEl) - (i * (this.animationMovementAmount + this.padding)));
+      
+    }
+
+  }
 
 
 
